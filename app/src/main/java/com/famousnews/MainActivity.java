@@ -68,6 +68,8 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     recyclerView.setAdapter(myAdapter);
                     myAdapter.notifyDataSetChanged();
                     refreshLayout.setRefreshing(false);
+                } else {
+                    Toast.makeText(MainActivity.this, response.message(), Toast.LENGTH_SHORT).show();
                 }
             }
 
