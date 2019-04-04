@@ -6,6 +6,11 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.famousnews.api.NewsApiInterface;
@@ -29,6 +34,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     private MyAdapter myAdapter;
     private List<Article> articles = new ArrayList<>();
     private SwipeRefreshLayout refreshLayout;
+    private ImageView errorImage;
+    private TextView errorTitle, errorMessage;
+    private Button btnRetry;
+    private RelativeLayout errorLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,6 +46,11 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         refreshLayout = findViewById(R.id.refresh_layout);
         recyclerView = findViewById(R.id.recycler_view);
+        errorLayout = findViewById(R.id.errorLayout);
+        errorImage = findViewById(R.id.errorImage);
+        errorTitle = findViewById(R.id.errorTitle);
+        errorMessage = findViewById(R.id.errorMessage);
+        btnRetry = findViewById(R.id.btnRetry);
 
         refreshLayout.setOnRefreshListener(this);
         refreshLayout.setColorSchemeResources(R.color.colorAccent);
@@ -49,6 +63,9 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     private void loadData() {
         refreshLayout.setRefreshing(true);
+        if (errorLayout.getVisibility() == View.VISIBLE) {
+            errorLayout.setVisibility(View.GONE);
+        }
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
@@ -69,14 +86,34 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     myAdapter.notifyDataSetChanged();
                     refreshLayout.setRefreshing(false);
                 } else {
-                    Toast.makeText(MainActivity.this, response.message(), Toast.LENGTH_SHORT).show();
+
+                    refreshLayout.setRefreshing(false);
+                    String errorCode;
+                    switch (response.code()) {
+                        case 404:
+                            errorCode = "404 not found";
+                            break;
+                        case 500:
+                            errorCode = "500 server broken";
+                            break;
+                        default:
+                            errorCode = "unknown error";
+                            break;
+                    }
+                    showErrorMessage(R.drawable.no_result, "No Result found", "Please Try Again!\n" + errorCode);
                 }
             }
 
             @Override
             public void onFailure(Call<News> call, Throwable t) {
                 refreshLayout.setRefreshing(false);
-                Toast.makeText(MainActivity.this, "Network Error", Toast.LENGTH_SHORT).show();
+                if (articles.isEmpty()) {
+                    showErrorMessage(R.drawable.no_network, "Oops...", "No Internet Connection, Please Try Again");
+                }
+                else
+                {
+                    Toast.makeText(MainActivity.this, "No Internet Connection !", Toast.LENGTH_SHORT).show();
+                }
 
             }
         });
@@ -157,6 +194,25 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     @Override
     public void onRefresh() {
         loadData();
+    }
+
+    private void showErrorMessage(int imageView, String title, String message) {
+
+        if (errorLayout.getVisibility() == View.GONE) {
+            errorLayout.setVisibility(View.VISIBLE);
+        }
+
+        errorImage.setImageResource(imageView);
+        errorTitle.setText(title);
+        errorMessage.setText(message);
+
+        btnRetry.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                loadData();
+            }
+        });
+
     }
 
 }
