@@ -25,6 +25,7 @@ import java.util.List;
 public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
     private Context context;
     private List<Article> newsList;
+    private ItemCallback listener;
 
     public MyAdapter(Context context, List<Article> newsList) {
         this.context = context;
@@ -35,7 +36,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
     @Override
     public MyViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int i) {
         View view = LayoutInflater.from(context).inflate(R.layout.recycler_view_item, viewGroup, false);
-        return new MyViewHolder(view);
+        return new MyViewHolder(view, listener);
     }
 
     @Override
@@ -67,7 +68,6 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
         myViewHolder.description.setText(model.getDescription());
         myViewHolder.source.setText(model.getSource().getName());
         myViewHolder.time.setText(Utils.DateToTimeFormat(model.getPublishedAt()));
-
     }
 
     @Override
@@ -75,12 +75,21 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
         return newsList.size();
     }
 
-    public class MyViewHolder extends RecyclerView.ViewHolder {
+    public void setOnItemClickListener(ItemCallback listener) {
+        this.listener = listener;
+    }
+
+    public interface ItemCallback {
+        void onItemClick(int position);
+    }
+
+    public class MyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         TextView title, description, author, published_at, source, time;
         ImageView imageView;
         ProgressBar progressBar;
+        ItemCallback itemCallback;
 
-        public MyViewHolder(@NonNull View itemView) {
+        public MyViewHolder(@NonNull View itemView, ItemCallback itemCallback) {
             super(itemView);
             title = itemView.findViewById(R.id.tv_title);
             description = itemView.findViewById(R.id.tv_description);
@@ -90,7 +99,13 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
             time = itemView.findViewById(R.id.tv_time);
             imageView = itemView.findViewById(R.id.iv_image);
             progressBar = itemView.findViewById(R.id.progress_bar_load_photo);
+            itemView.setOnClickListener(this);
+            this.itemCallback = itemCallback;
+        }
 
+        @Override
+        public void onClick(View v) {
+            itemCallback.onItemClick(getAdapterPosition());
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.famousnews;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -53,11 +54,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         btnRetry = findViewById(R.id.btnRetry);
 
         refreshLayout.setOnRefreshListener(this);
-        refreshLayout.setColorSchemeResources(R.color.colorAccent);
+        refreshLayout.setColorSchemeResources(R.color.lightGreen);
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(layoutManager);
         recyclerView.setItemAnimator(new DefaultItemAnimator());
-
         loadData();
     }
 
@@ -83,6 +83,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     articles = response.body().getArticle();
                     myAdapter = new MyAdapter(MainActivity.this, articles);
                     recyclerView.setAdapter(myAdapter);
+                    initListener();
                     myAdapter.notifyDataSetChanged();
                     refreshLayout.setRefreshing(false);
                 } else {
@@ -109,9 +110,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 refreshLayout.setRefreshing(false);
                 if (articles.isEmpty()) {
                     showErrorMessage(R.drawable.no_network, "Oops...", "No Internet Connection, Please Try Again");
-                }
-                else
-                {
+                } else {
                     Toast.makeText(MainActivity.this, "No Internet Connection !", Toast.LENGTH_SHORT).show();
                 }
 
@@ -191,6 +190,18 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 //        return myNews;
 //    }
 
+    private void initListener() {
+        myAdapter.setOnItemClickListener(new MyAdapter.ItemCallback() {
+            @Override
+            public void onItemClick(int position) {
+                Article clickedArticle = articles.get(position);
+                Intent intent = new Intent(MainActivity.this, NewsDetailActivity.class);
+                intent.putExtra("url", clickedArticle.getUrl());
+                startActivity(intent);
+            }
+        });
+    }
+
     @Override
     public void onRefresh() {
         loadData();
@@ -214,5 +225,4 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         });
 
     }
-
 }
