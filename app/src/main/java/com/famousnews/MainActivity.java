@@ -8,6 +8,8 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 
 import com.famousnews.api.NewsApiInterface;
@@ -209,6 +211,14 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 });
         mSnackBar.setActionTextColor(Color.WHITE);
         mSnackBar.show();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.menu_main, menu);
+
+        return true;
     }
 
     @Override
