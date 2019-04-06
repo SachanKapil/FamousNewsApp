@@ -23,11 +23,11 @@ import com.famousnews.models.Article;
 import java.util.List;
 
 public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
-    private Context context;
-    private List<Article> newsList;
+    private final Context context;
+    private final List<Article> newsList;
     private ItemCallback listener;
 
-    public MyAdapter(Context context, List<Article> newsList) {
+    MyAdapter(Context context, List<Article> newsList) {
         this.context = context;
         this.newsList = newsList;
     }
@@ -45,8 +45,8 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
         Article model = newsList.get(i);
         Glide.with(context)
                 .load(model.getUrlToImage())
-                .placeholder(Utils.getRandomDrawbleColor())
-                .error(Utils.getRandomDrawbleColor())
+                .placeholder(Utils.getRandomDrawableColor())
+                .error(Utils.getRandomDrawableColor())
                 .listener(new RequestListener<Drawable>() {
                     @Override
                     public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
@@ -75,7 +75,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
         return newsList.size();
     }
 
-    public void setOnItemClickListener(ItemCallback listener) {
+    void setOnItemClickListener(ItemCallback listener) {
         this.listener = listener;
     }
 
@@ -84,12 +84,17 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.MyViewHolder> {
     }
 
     public class MyViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        TextView title, description, author, published_at, source, time;
-        ImageView imageView;
-        ProgressBar progressBar;
-        ItemCallback itemCallback;
+        final TextView title;
+        final TextView description;
+        final TextView author;
+        final TextView published_at;
+        final TextView source;
+        final TextView time;
+        final ImageView imageView;
+        final ProgressBar progressBar;
+        final ItemCallback itemCallback;
 
-        public MyViewHolder(@NonNull View itemView, ItemCallback itemCallback) {
+        MyViewHolder(@NonNull View itemView, ItemCallback itemCallback) {
             super(itemView);
             title = itemView.findViewById(R.id.tv_title);
             description = itemView.findViewById(R.id.tv_description);

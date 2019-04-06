@@ -6,12 +6,13 @@ import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 
 import com.famousnews.api.NewsApiInterface;
+import com.famousnews.database.AppDatabase;
+import com.famousnews.database.UserDAO;
 import com.famousnews.models.Article;
 import com.famousnews.models.News;
 
@@ -26,26 +27,28 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
 
-    public static final String API_KEY = "7f75980f5eed4b76bef92d49c69edbc8";
+    private static final String API_KEY = "7f75980f5eed4b76bef92d49c69edbc8";
     private static final String BASE_URL = "https://newsapi.org/v2/";
     private RecyclerView recyclerView;
     private MyAdapter myAdapter;
-    private List<Article> articles = new ArrayList<>();
+    private final List<Article> articles = new ArrayList<>();
     private SwipeRefreshLayout refreshLayout;
+    private UserDAO userDAO;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        refreshLayout = findViewById(R.id.refresh_layout);
         recyclerView = findViewById(R.id.recycler_view);
-
+        refreshLayout = findViewById(R.id.refresh_layout);
         refreshLayout.setOnRefreshListener(this);
         refreshLayout.setColorSchemeResources(R.color.lightGreen);
-        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
-        recyclerView.setLayoutManager(layoutManager);
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
+
+        AppDatabase appDatabase = AppDatabase.getAppDatabase();
+        userDAO = appDatabase.userDao();
+
+        setAdapterToRecyclerView(articles);
         loadData();
     }
 
@@ -65,11 +68,13 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     if (!articles.isEmpty()) {
                         articles.clear();
                     }
-                    articles = response.body().getArticle();
-                    setAdapterToRecyclerView(articles);
+                    List<Article> latestArticlesList = response.body().getArticle();
+                    articles.addAll(latestArticlesList);
+                    updateDatabase(latestArticlesList);
                     refreshLayout.setRefreshing(false);
                 } else {
                     refreshLayout.setRefreshing(false);
+                    loadOldArticlesFromDatabase();
                     showErrorMessage("No Result found, Error !");
                 }
             }
@@ -77,9 +82,24 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             @Override
             public void onFailure(Call<News> call, Throwable t) {
                 refreshLayout.setRefreshing(false);
+                loadOldArticlesFromDatabase();
                 showErrorMessage("No Internet Connection !");
             }
         });
+    }
+
+    private void updateDatabase(List<Article> articles) {
+        userDAO.delete();
+        for (Article article : articles) {
+            userDAO.insertArticle(article);
+        }
+        myAdapter.notifyDataSetChanged();
+    }
+
+    private void loadOldArticlesFromDatabase() {
+        List<Article> oldArticlesList = userDAO.getArticle();
+        articles.addAll(oldArticlesList);
+        myAdapter.notifyDataSetChanged();
     }
 
 //    private void loadDataWithSelfParsing() {
@@ -155,9 +175,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 //    }
 
     private void setAdapterToRecyclerView(List<Article> articles) {
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(layoutManager);
         myAdapter = new MyAdapter(this, articles);
         recyclerView.setAdapter(myAdapter);
-        myAdapter.notifyDataSetChanged();
         initListener();
     }
 
@@ -188,5 +209,11 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 });
         mSnackBar.setActionTextColor(Color.WHITE);
         mSnackBar.show();
+    }
+
+    @Override
+    protected void onDestroy() {
+        AppDatabase.destroyInstance();
+        super.onDestroy();
     }
 }

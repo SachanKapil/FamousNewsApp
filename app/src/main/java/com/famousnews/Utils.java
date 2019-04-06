@@ -13,7 +13,7 @@ import java.util.Random;
 
 class Utils {
 
-    private static ColorDrawable[] vibrantLightColorList =
+    private static final ColorDrawable[] vibrantLightColorList =
             {
                     new ColorDrawable(Color.parseColor("#ffeead")),
                     new ColorDrawable(Color.parseColor("#93cfb3")),
@@ -25,17 +25,17 @@ class Utils {
                     new ColorDrawable(Color.parseColor("#d93947"))
             };
 
-    static ColorDrawable getRandomDrawbleColor() {
+    static ColorDrawable getRandomDrawableColor() {
         int idx = new Random().nextInt(vibrantLightColorList.length);
         return vibrantLightColorList[idx];
     }
 
-    static String DateToTimeFormat(String oldstringDate) {
+    static String DateToTimeFormat(String oldStringDate) {
         PrettyTime p = new PrettyTime(new Locale(getLanguage()));
         String isTime = null;
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault());
-            Date date = sdf.parse(oldstringDate);
+            Date date = sdf.parse(oldStringDate);
             isTime = p.format(date);
         } catch (ParseException e) {
             e.printStackTrace();
@@ -44,15 +44,15 @@ class Utils {
         return isTime;
     }
 
-    static String DateFormat(String oldstringDate) {
+    static String DateFormat(String oldStringDate) {
         String newDate;
         SimpleDateFormat dateFormat = new SimpleDateFormat("E, d MMM yyyy", new Locale(getLanguage()));
         try {
-            Date date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).parse(oldstringDate);
+            Date date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.getDefault()).parse(oldStringDate);
             newDate = dateFormat.format(date);
         } catch (ParseException e) {
             e.printStackTrace();
-            newDate = oldstringDate;
+            newDate = oldStringDate;
         }
 
         return newDate;
@@ -64,7 +64,7 @@ class Utils {
         return country.toLowerCase();
     }
 
-    public static String getLanguage() {
+    private static String getLanguage() {
         Locale locale = Locale.getDefault();
         String country = String.valueOf(locale.getLanguage());
         return country.toLowerCase();

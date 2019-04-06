@@ -1,7 +1,14 @@
 package com.famousnews.models;
 
+import android.arch.persistence.room.Embedded;
+import android.arch.persistence.room.Entity;
+import android.arch.persistence.room.PrimaryKey;
+import android.support.annotation.NonNull;
+
+@Entity(tableName = "news")
 public class Article {
 
+    @Embedded
     private Source source;
 
     private String author;
@@ -10,7 +17,9 @@ public class Article {
 
     private String description;
 
-    private String url;
+    @NonNull
+    @PrimaryKey
+    private String url="";
 
     private String urlToImage;
 
@@ -34,6 +43,7 @@ public class Article {
         return description;
     }
 
+    @NonNull
     public String getUrl() {
         return url;
     }
@@ -66,7 +76,7 @@ public class Article {
         this.description = description;
     }
 
-    public void setUrl(String url) {
+    public void setUrl(@NonNull String url) {
         this.url = url;
     }
 
