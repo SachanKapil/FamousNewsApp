@@ -32,7 +32,8 @@
                     style="@android:style/Widget.DeviceDefault.Light.ProgressBar.Small"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/progress_bar_top_margin" />
+                    app:layout_anchor="@id/iv_image"
+                    app:layout_anchorGravity="center" />
 
                 <ImageView
                     android:id="@+id/iv_bottom_shadow_image"

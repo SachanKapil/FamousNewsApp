@@ -1,18 +1,15 @@
 package com.famousnews;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
-import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-import android.widget.Toast;
 
 import com.famousnews.api.NewsApiInterface;
 import com.famousnews.models.Article;
@@ -35,10 +32,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     private MyAdapter myAdapter;
     private List<Article> articles = new ArrayList<>();
     private SwipeRefreshLayout refreshLayout;
-    private ImageView errorImage;
-    private TextView errorTitle, errorMessage;
-    private Button btnRetry;
-    private RelativeLayout errorLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -47,11 +40,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         refreshLayout = findViewById(R.id.refresh_layout);
         recyclerView = findViewById(R.id.recycler_view);
-        errorLayout = findViewById(R.id.errorLayout);
-        errorImage = findViewById(R.id.errorImage);
-        errorTitle = findViewById(R.id.errorTitle);
-        errorMessage = findViewById(R.id.errorMessage);
-        btnRetry = findViewById(R.id.btnRetry);
 
         refreshLayout.setOnRefreshListener(this);
         refreshLayout.setColorSchemeResources(R.color.lightGreen);
@@ -63,9 +51,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     private void loadData() {
         refreshLayout.setRefreshing(true);
-        if (errorLayout.getVisibility() == View.VISIBLE) {
-            errorLayout.setVisibility(View.GONE);
-        }
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
@@ -81,39 +66,18 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                         articles.clear();
                     }
                     articles = response.body().getArticle();
-                    myAdapter = new MyAdapter(MainActivity.this, articles);
-                    recyclerView.setAdapter(myAdapter);
-                    initListener();
-                    myAdapter.notifyDataSetChanged();
+                    setAdapterToRecyclerView(articles);
                     refreshLayout.setRefreshing(false);
                 } else {
-
                     refreshLayout.setRefreshing(false);
-                    String errorCode;
-                    switch (response.code()) {
-                        case 404:
-                            errorCode = "404 not found";
-                            break;
-                        case 500:
-                            errorCode = "500 server broken";
-                            break;
-                        default:
-                            errorCode = "unknown error";
-                            break;
-                    }
-                    showErrorMessage(R.drawable.no_result, "No Result found", "Please Try Again!\n" + errorCode);
+                    showErrorMessage("No Result found, Error !");
                 }
             }
 
             @Override
             public void onFailure(Call<News> call, Throwable t) {
                 refreshLayout.setRefreshing(false);
-                if (articles.isEmpty()) {
-                    showErrorMessage(R.drawable.no_network, "Oops...", "No Internet Connection, Please Try Again");
-                } else {
-                    Toast.makeText(MainActivity.this, "No Internet Connection !", Toast.LENGTH_SHORT).show();
-                }
-
+                showErrorMessage("No Internet Connection !");
             }
         });
     }
@@ -190,6 +154,13 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 //        return myNews;
 //    }
 
+    private void setAdapterToRecyclerView(List<Article> articles) {
+        myAdapter = new MyAdapter(this, articles);
+        recyclerView.setAdapter(myAdapter);
+        myAdapter.notifyDataSetChanged();
+        initListener();
+    }
+
     private void initListener() {
         myAdapter.setOnItemClickListener(new MyAdapter.ItemCallback() {
             @Override
@@ -207,22 +178,15 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         loadData();
     }
 
-    private void showErrorMessage(int imageView, String title, String message) {
-
-        if (errorLayout.getVisibility() == View.GONE) {
-            errorLayout.setVisibility(View.VISIBLE);
-        }
-
-        errorImage.setImageResource(imageView);
-        errorTitle.setText(title);
-        errorMessage.setText(message);
-
-        btnRetry.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                loadData();
-            }
-        });
-
+    private void showErrorMessage(String message) {
+        Snackbar mSnackBar = Snackbar.make(refreshLayout, message, Snackbar.LENGTH_INDEFINITE)
+                .setAction("RETRY", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        loadData();
+                    }
+                });
+        mSnackBar.setActionTextColor(Color.WHITE);
+        mSnackBar.show();
     }
 }

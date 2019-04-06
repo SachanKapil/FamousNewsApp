@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -8,13 +9,14 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?android:attr/actionBarSize"
-        android:background="@color/lightGreen">
+        android:background="@color/lightGreen"
+        app:contentInsetEnd="@dimen/toolbar_inset"
+        app:contentInsetStart="@dimen/toolbar_inset">
 
         <TextView
             android:id="@+id/tv_url"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="@dimen/tv_url_end_margin"
             android:background="@drawable/white_border"
             android:ellipsize="end"
             android:maxLines="1"
@@ -28,8 +30,8 @@
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="match_parent"
         android:layout_height="@dimen/progressbar_height"
-        android:progressTint="@color/colorTextTitle"
-        android:max="100" />
+        android:max="100"
+        android:progressTint="@color/colorTextTitle" />
 
     <WebView
         android:id="@+id/webView"

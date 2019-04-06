@@ -31,7 +31,6 @@ public class NewsDetailActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayShowTitleEnabled(false);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
         Intent i = getIntent();
         String mURL = i.getStringExtra("url");
