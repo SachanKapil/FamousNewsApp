@@ -64,7 +64,7 @@ class Utils {
         return country.toLowerCase();
     }
 
-    private static String getLanguage() {
+    public static String getLanguage() {
         Locale locale = Locale.getDefault();
         String country = String.valueOf(locale.getLanguage());
         return country.toLowerCase();

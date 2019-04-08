@@ -1,5 +1,7 @@
 package com.famousnews;
 
+import android.app.SearchManager;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -8,9 +10,13 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
+import android.widget.SearchView;
+import android.widget.Toast;
 
 import com.famousnews.api.NewsApiInterface;
 import com.famousnews.database.AppDatabase;
@@ -51,10 +57,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         userDAO = appDatabase.userDao();
 
         setAdapterToRecyclerView(articles);
-        loadData();
+        loadData("");
     }
 
-    private void loadData() {
+    private void loadData(final String keyword) {
         refreshLayout.setRefreshing(true);
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
@@ -62,7 +68,13 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 .build();
         NewsApiInterface newsApiInterface = retrofit.create(NewsApiInterface.class);
         String country = Utils.getCountry();
-        Call<News> call = newsApiInterface.getNews(country, API_KEY);
+        String language = Utils.getLanguage();
+        Call<News> call;
+        if (keyword.length() > 0) {
+            call = newsApiInterface.getNewsSearch(keyword, language, "publishedAt", API_KEY);
+        } else {
+            call = newsApiInterface.getNews(country, API_KEY);
+        }
         call.enqueue(new Callback<News>() {
             @Override
             public void onResponse(Call<News> call, Response<News> response) {
@@ -72,7 +84,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     }
                     List<Article> latestArticlesList = response.body().getArticle();
                     articles.addAll(latestArticlesList);
-                    updateDatabase(latestArticlesList);
+                    if (keyword.equals("")) {
+                        updateDatabase(latestArticlesList);
+                    }
+                    myAdapter.notifyDataSetChanged();
                     refreshLayout.setRefreshing(false);
                 } else {
                     refreshLayout.setRefreshing(false);
@@ -95,7 +110,6 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         for (Article article : articles) {
             userDAO.insertArticle(article);
         }
-        myAdapter.notifyDataSetChanged();
     }
 
     private void loadOldArticlesFromDatabase() {
@@ -198,7 +212,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     @Override
     public void onRefresh() {
-        loadData();
+        loadData("");
     }
 
     private void showErrorMessage(String message) {
@@ -206,7 +220,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 .setAction("RETRY", new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        loadData();
+                        loadData("");
                     }
                 });
         mSnackBar.setActionTextColor(Color.WHITE);
@@ -218,12 +232,32 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu_main, menu);
 
-        return true;
-    }
+        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        final SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        MenuItem searchMenuItem = menu.findItem(R.id.action_search);
 
-    @Override
-    protected void onDestroy() {
-        AppDatabase.destroyInstance();
-        super.onDestroy();
+        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        searchView.setQueryHint("Search Latest News...");
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                if (query.length() > 2) {
+                    loadData(query);
+                } else {
+                    Toast.makeText(MainActivity.this, "Type more than two letters!", Toast.LENGTH_SHORT).show();
+                }
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                return false;
+            }
+        });
+
+        searchMenuItem.getIcon().setVisible(false, false);
+
+        return true;
     }
 }
