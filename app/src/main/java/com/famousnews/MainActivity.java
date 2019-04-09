@@ -4,13 +4,14 @@ import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -37,6 +38,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     private static final String API_KEY = "7f75980f5eed4b76bef92d49c69edbc8";
     private static final String BASE_URL = "https://newsapi.org/v2/";
+    private static final String TAG = "MainActivity";
     private RecyclerView recyclerView;
     private MyAdapter myAdapter;
     private final List<Article> articles = new ArrayList<>();
@@ -78,6 +80,15 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
         call.enqueue(new Callback<News>() {
             @Override
             public void onResponse(Call<News> call, Response<News> response) {
+
+//                if (response.raw().cacheResponse() != null) {
+//                    Log.d(TAG, "onResponse: response was served from cache" + response.raw().cacheResponse());
+//                }
+//
+//                if (response.raw().networkResponse() != null) {
+//                    Log.d(TAG, "onResponse: response was served from network/server" + response.raw().networkResponse());
+//                }
+
                 if (response.isSuccessful() && response.body() != null) {
                     if (!articles.isEmpty()) {
                         articles.clear();
@@ -91,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     refreshLayout.setRefreshing(false);
                 } else {
                     refreshLayout.setRefreshing(false);
-                    loadOldArticlesFromDatabase();
+//                    loadOldArticlesFromDatabase();
                     showErrorMessage("No Result found, Error !");
                 }
             }
@@ -99,26 +110,13 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             @Override
             public void onFailure(Call<News> call, Throwable t) {
                 refreshLayout.setRefreshing(false);
-                loadOldArticlesFromDatabase();
+//                loadOldArticlesFromDatabase();
                 showErrorMessage("No Internet Connection !");
             }
         });
     }
 
-    private void updateDatabase(List<Article> articles) {
-        userDAO.delete();
-        for (Article article : articles) {
-            userDAO.insertArticle(article);
-        }
-    }
-
-    private void loadOldArticlesFromDatabase() {
-        List<Article> oldArticlesList = userDAO.getArticle();
-        articles.addAll(oldArticlesList);
-        myAdapter.notifyDataSetChanged();
-    }
-
-//    private void loadDataWithSelfParsing() {
+    //        private void loadDataWithSelfParsing() {
 //        refreshLayout.setRefreshing(true);
 //        Retrofit retrofit = new Retrofit.Builder()
 //                .baseUrl(BASE_URL)
@@ -208,6 +206,67 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                 startActivity(intent);
             }
         });
+    }
+
+//    private OkHttpClient getCustomClient() {
+//
+//        int cacheSize = 10 * 1024 * 1024; // 10 MB
+//        Cache cache = new Cache(getCacheDir(), cacheSize);
+//        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+//                .addNetworkInterceptor(new ResponseCachingInterceptor())
+//                .addInterceptor(new OfflineResponseCacheInterceptor())
+//                .cache(cache)
+//                .build();
+//        return okHttpClient;
+//
+//    }
+//
+//    private class ResponseCachingInterceptor implements Interceptor {
+//        @Override
+//        public okhttp3.Response intercept(Chain chain) throws IOException {
+//            okhttp3.Response response = chain.proceed(chain.request());
+//            return response.newBuilder()
+//                    .removeHeader("Pragma")
+//                    .removeHeader("Cache-Control")
+//                    .header("Cache-Control", "public, max-age=60")
+//                    .build();
+//        }
+//    }
+//
+//    private class OfflineResponseCacheInterceptor implements Interceptor {
+//        @Override
+//        public okhttp3.Response intercept(Chain chain) throws IOException {
+//            Request request = chain.request();
+//            if (!amIConnected()) {
+//                request = request.newBuilder()
+//                        .removeHeader("Pragma")
+//                        .removeHeader("Cache-Control")
+//                        .header("Cache-Control",
+//                                "public, only-if-cached, max-stale= 60")
+//                        .build();
+//            }
+//            return chain.proceed(request);
+//        }
+//    }
+
+    private void loadOldArticlesFromDatabase() {
+        List<Article> oldArticlesList = userDAO.getArticle();
+        articles.addAll(oldArticlesList);
+        myAdapter.notifyDataSetChanged();
+    }
+
+    private void updateDatabase(List<Article> articles) {
+        userDAO.delete();
+        for (Article article : articles) {
+            userDAO.insertArticle(article);
+        }
+    }
+
+    private boolean amIConnected() {
+        ConnectivityManager connectivityManager = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+
     }
 
     @Override
